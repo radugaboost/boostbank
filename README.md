@@ -30,6 +30,10 @@
 
 ![alt text](examples/create.png)
 
+- Payments in personal account.
+
+![alt text](examples/payments_pa.png)
+
 # Test results
 
 - The project is 100% tested.
