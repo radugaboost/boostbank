@@ -1,0 +1,71 @@
+
+name: Проверка
+on: [push]
+jobs:
+  linter:
+    name: Линтер
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Установка Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.10.6
+    - name: Установка зависимостей
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r flake_requirements.txt
+    - name: Flake8
+      run: flake8 .
+  container-job:
+    name: Тесты
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+            POSTGRES_PASSWORD: test
+            POSTGRES_DBNAME: test
+            POSTGRES_USER: test
+            POSTGRES_PORT: 5555
+            POSTGRES_HOST: 127.0.0.1
+        ports:
+          - 5555:5432
+      redis:
+        image: redis
+        env:
+            REDIS_HOST: 127.0.0.1
+            REDIS_PORT: 6379
+        ports:
+          - 6379:6379
+    steps:
+    - uses: actions/checkout@v2
+    - name: Установка Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10.6"
+    - name: Установка зависимостей
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Создание env
+      run: |
+        echo "PG_PORT=5555" >> bank/.env
+        echo "PG_USER=test" >> bank/.env
+        echo "PG_PASSWORD=test" >> bank/.env
+        echo "PG_DBNAME=test" >> bank/.env
+        echo "PG_HOST=127.0.0.1" >> bank/.env
+        echo "REDIS_HOST=127.0.0.1" >> bank/.env
+        echo "REDIS_PORT=6379" >> bank/.env
+        echo "ADMIN_USERNAME=admin" >> bank/.env
+        echo "ADMIN_FIRST_NAME=Boost" >> bank/.env
+        echo "ADMIN_LAST_NAME=Bank" >> bank/.env
+        echo "ADMIN_EMAIL=admin@example.com" >> bank/.env
+        echo "ADMIN_PASSWORD=admin" >> bank/.env
+        echo "ADMIN_PHONE_NUMBER=88005553535" >> bank/.env
+        echo "SECRET_KEY=test" >> bank/.env
+    - name: Тесты
+      run: |
+        python3 manage.py makemigrations bank_app
+        python3 manage.py migrate
+        python3 manage.py test tests
